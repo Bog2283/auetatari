@@ -5,46 +5,47 @@ import time
 TOKEN = '6926012853:AAFUvjf9Yj4plSW36JdjceBUvnEaL_IQROw'
 bot = telebot.TeleBot(TOKEN)
 
+from telebot import util
 
 questions1 = {
 
-    'приветствие' : '인사',
-    'приветствовать' : '인사하다',
-    'Давайте поздороваемся' : '인사합시다',
-    'Здравствуйте' : '안녕하십니까 (안녕하세요)',
+    'приветствие': '인사',
+    'приветствовать': '인사하다',
+    'Давайте поздороваемся': '인사합시다',
+    'Здравствуйте': '안녕하십니까 (안녕하세요)',
     'Привет': '안녕',
-    'До свидания (уходящему)' : '안녕히 가십시오 (안녕히 가세요)',
-    'До свидания (остающемуся)' : '안녕히 계십시오 (안녕히 계세요)',
-    'Пока'  : '잘 가',
-    'Пока' : '잘 있어',
+    'До свидания (уходящему)': '안녕히 가십시오 (안녕히 가세요)',
+    'До свидания (остающемуся)': '안녕히 계십시오 (안녕히 계세요)',
+    'Пока': '잘 가',
+    'Пока': '잘 있어',
     'Здравствуйте (тому, кто усердно трудится)': '수고하십니다',
-    'До свидания (тому, кто усердно трудился)' : '수고했습니다',
-    'Здравствуйте (при первой встрече)' : '처음 뵙겠습니다',
-    'Это': '이것', 
-    'Дедушка' :'할아버지' ,
-    'Сильно, очень' : '아주' ,
-    'Сильно, реально' : '매우'  ,
-    'Любить' : '좋아하다' ,
-    'Падать в цене' : '싸지다'    ,
-    '(Красивый)' : '예쁩',
-    'Ручка' : '펜'  ,
-    'Год' : '년',
-    'Ранее' : '전에' ,
-    'Старший брат' : '오빠',
-    'Жизнь' : '생'  ,
-    'Сейчас' : '지금' ,
-    'Офис' : '회사' ,
+    'До свидания (тому, кто усердно трудился)': '수고했습니다',
+    'Здравствуйте (при первой встрече)': '처음 뵙겠습니다',
+    'Это': '이것',
+    'Дедушка':'할아버지',
+    'Сильно, очень': '아주',
+    'Сильно, реально': '매우',
+    'Любить': '좋아하다',
+    'Падать в цене': '싸지다',
+    '(Красивый)': '예쁩',
+    'Ручка': '펜',
+    'Год': '년',
+    'Ранее': '전에',
+    'Старший брат': '오빠',
+    'Жизнь': '생',
+    'Сейчас': '지금',
+    'Офис': '회사',
     'Работа, задание' : '일',
-    'Работа, задание' : '많이' ,
+    'Работа, задание' : '많이',
     'Работа, задание' : '드리다',
-    'В' : '안에',
-    'Ago' : '전에',
-    'Покупать' : '사다' ,
-    '20' : '스물',
-    '4' : '넷' ,
-    'Работать' : '일하다' ,
-    'Счетное слово для лет человека' : '살',
-    'Handsome' : '잘생기다' ,
+    'В': '안에',
+    'Ago': '전에',
+    'Покупать': '사다',
+    '20': '스물',
+    '4': '넷',
+    'Работать': '일하다',
+    'Счетное слово для лет человека': '살',
+    'Handsome': '잘생기다',
     'Помогать' : '도와드리다',
     'Профессия' : '직업' ,
     'Упражнение' : '연습' ,
@@ -60,7 +61,7 @@ questions1 = {
     'Правило' : '규침' ,
     'Встречаться, видеться' : '만나다' ,
     'Разговор' : '이야기' ,
-    'Приезжать' : '오다' , 
+    'Приезжать' : '오다' ,
     'Часто' : '자주' ,
     'Иметь, находиться' : '있다' ,
     'Чтение' : '읽기' ,
@@ -104,15 +105,35 @@ questions = {
 }
 
 
+stop_flag = True
+
+@bot.message_handler(commands=['start'])
+def start(message):
+    global stop_flag
+    stop_flag = False
+    bot.send_message(message.chat.id, 'Привет, чем могу помочь?')
+
+@bot.message_handler(commands=['stop'])
+def stop(message):
+    global stop_flag
+    stop_flag = True
+    bot.send_message(message.chat.id, 'Бот остановлен')
+
 @bot.message_handler(commands=['bot'])
 
 def send_question(message):
+    if stop_flag:
+        bot.send_message(message.chat.id, 'Бот остановлен')
     question = random.choice(list(questions.keys()))
     bot.send_message(message.chat.id, question)
     bot.register_next_step_handler(message, check_answer, question)
 
 
 def check_answer(message, question):
+    if message.text == '/stop':
+        stop_flag = True
+        bot.send_message(message.chat.id, 'Бот остановлен')
+        return
     if message.text.lower() != questions[question].lower():
         bot.send_message(message.chat.id, "Неправильно.")
     else:
@@ -127,14 +148,20 @@ def check_answer(message, question):
 @bot.message_handler(commands=['kor'])
 
 def send_question1(message1):
+    if stop_flag:
+        return True
     question1 = random.choice(list(questions1.keys()))
     bot.send_message(message1.chat.id, question1)
     bot.register_next_step_handler(message1, check_answer1, question1)
 
 
 def check_answer1(message1, question1):
+    if message1.text == '/stop':
+        stop_flag = True
+        bot.send_message(message1.chat.id, 'Бот остановлен')
+        return
     if message1.text.lower() != questions1[question1].lower():
-        bot.send_message(message1.chat.id, "Неправильно. Будет лучше:" + questions1[question1] )
+        bot.send_message(message1.chat.id, "Неправильно. Будет лучше:" + questions1[question1])
     else:
         bot.send_message(message1.chat.id, "Умничка!")
     time.sleep(0.6)
@@ -143,9 +170,8 @@ def check_answer1(message1, question1):
     return
 
 
-@bot.message.handler(commands=[stop])
 
 
+bot.polling()
 
 
-bot.polling(non_stop=True)
